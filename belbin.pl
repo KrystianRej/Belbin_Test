@@ -1,3 +1,106 @@
+:- use_module(library(http/thread_httpd)).
+:- use_module(library(http/http_dispatch)).
+:- use_module(library(http/http_error)).
+:- use_module(library(http/html_write)).
+:- use_module(library(http/http_client)).
+:- http_handler('/', web_form, []).
+
+server(Port) :-
+        http_server(http_dispatch, [port(Port)]).
+
+
+web_form(_Request) :-
+	reply_html_page(
+	    title('POST demo'),
+	    [
+	     form([action='/landing', method='POST'], [
+		p([], [
+		  label([for=pytanie1],'Pytanie 1:'),
+		  input([name=pytanie1, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty1],'Ilosc punktow:'),
+		  input([name=punkty1, type=number])
+		      ]),
+		p([], [
+		  label([for=pytanie2],'Pytanie 2'),
+		  input([name=pytanie2, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty2],'Ilosc punktow:'),
+		  input([name=punkty2, type=number])
+		      ]),
+		p([], [
+		  label([for=pytanie3],'Pytanie 3'),
+		  input([name=pytanie3, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty3],'Ilosc punktow:'),
+		  input([name=punkty3, type=number])
+		      ]),
+		p([], [
+		  label([for=pytanie4],'Pytanie 4'),
+		  input([name=pytanie4, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty4],'Ilosc punktow:'),
+		  input([name=punkty4, type=number])
+		      ]),
+		p([], [
+		  label([for=pytanie5],'Pytanie 5'),
+		  input([name=pytanie5, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty5],'Ilosc punktow:'),
+		  input([name=punkty5, type=number])
+		      ]),
+		p([], [
+		  label([for=pytanie6],'Pytanie 6'),
+		  input([name=pytanie6, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty6],'Ilosc punktow:'),
+		  input([name=punkty6, type=number])
+		      ]),
+		p([], [
+		  label([for=pytanie7],'Pytanie 7'),
+		  input([name=pytanie7, type=textarea])
+		      ]),
+		p([], [
+		  label([for=punkty7],'Ilosc punktow:'),
+		  input([name=punkty7, type=number])
+		      ]),
+		p([], input([name=submit, type=submit, value='Submit'], []))
+	      ])]).
+
+:- http_handler('/landing', landing_pad, []).
+
+landing_pad(Request) :-
+        member(method(post), Request), !,
+        http_read_data(Request, Data, []),
+		addPoints(Data, 1, 1),
+		addPoints(Data, 3, 2),
+		addPoints(Data, 5, 3),
+		addPoints(Data, 7, 4),
+		addPoints(Data, 9, 5),
+		addPoints(Data, 11, 6),
+		addPoints(Data, 13, 7),
+		final_profile(Final, Message),
+        format('Content-type: text/html~n~n', []),
+	format('<p>', []),
+        portray_clause(Final),
+        portray_clause(Message),
+		(Message =:= 1 -> 
+		portray_clause("Jestes Koordynujacym Liderem!") ; Message =:= 2 -> 
+			portray_clause("Jestes Praktycznym Realizatorem!") ; Message =:= 3 -> 
+				portray_clause("Jestes Ambitnym Komendantem!") ; Message =:= 4 -> 
+					portray_clause("Jestes Kreatywnym Pomyslodawca!") ; Message =:= 5 ->
+						portray_clause("Jestes Wszedobylskim Lacznikiem!") ; Message =:= 6 -> 
+							portray_clause("Jestes Racjonalnym Analitykiem!") ; Message =:= 7 ->
+								portray_clause("Jestes Dusza Zespolu!") ; Message =:= 8 ->
+									portray_clause("Jestes Finiszujacym Perfekcjonista!")),
+	format('</p>').
+
 odpowiedz(a).
 odpowiedz(b).
 odpowiedz(c).
@@ -10,6 +113,18 @@ odpowiedz(h).
 
 :- dynamic(points/3).
 
+addPoints(Data, Num, Question) :-
+	nth1(Num, Data, Elem),
+	term_string(Elem, Str),
+	sub_atom(Str, _, 1, 0, Pyt0),
+	Num2 is Num + 1,
+	nth1(Num2, Data, Elem1),
+	term_string(Elem1, Str1),
+	sub_atom(Str1, _, 1, 1, Point0),
+	atom_number(Point0, NumPoint0),
+	assertz(points(Question, Pyt0, NumPoint0)).
+
+
 
 maxlist([X], X).
 maxlist([X,Y|T], MAX) :-
@@ -19,7 +134,7 @@ maxlist([X, Y|T], MAX) :-
 	X =< Y,
 	maxlist([Y|T], MAX).
 
-final_profile :-
+final_profile(Final, Message) :-
 	check_answer_kl(1, KL1),
 	check_answer_kl(2, KL2),
 	check_answer_kl(3, KL3),
@@ -85,50 +200,15 @@ final_profile :-
 	WynikDZ is DZ1 + DZ2 + DZ3 + DZ4 + DZ5 + DZ6 + DZ7,
 	WynikFP is FP1 + FP2 + FP3 + FP4 + FP5 + FP6 + FP7,
 	maxlist([WynikKL, WynikPR, WynikAK, WynikKP, WynikWL, WynikRA, WynikDZ, WynikFP], Max),
-	nl,
-	write(' finalny wynik dla Koordynujacego Lidera: '),
-	write(WynikKL),
-	nl,
-	write(' finalny wynik dla Praktycznego Realizatora: '),
-	write(WynikPR),
-	nl,
-	write(' finalny wynik dla Ambitnego Komendanta: '),
-	write(WynikAK),
-	nl,
-	write(' finalny wynik dla Kreatywnego Pomyslodawcy: '),
-	write(WynikKP),
-	nl,
-	write(' finalny wynik dla Wszedobylskiego Lacznika: '),
-	write(WynikWL),
-	nl,
-	write(' finalny wynik dla Racjonalnego Analityka: '),
-	write(WynikRA),
-	nl,
-	write(' finalny wynik dla Duszy Zespolu: '),
-	write(WynikDZ),
-	nl,
-	write(' finalny wynik dla Finiszujacego Perfekcjoniste: '),
-	write(WynikFP),
-	nl,
-	write('Po analizie max: '),
-	nl,
 	(Max =:= WynikKL -> 
-		write(' Jestes Koordynujacym Liderem! '),
-		write(WynikKL) ; Max =:= WynikPR -> 
-			write(' Jestes Praktycznym Realizatorem! '),
-			write(WynikPR) ; Max =:= WynikAK -> 
-				write(' Jestes Ambitnym Komendantem! '),
-				write(WynikAK) ; Max =:= WynikKP -> 
-					write(' Jestes Kreatywnym Pomyslodawca! '),
-					write(WynikKP) ; Max =:= WynikWL ->
-						write(' Jestes Wszedobylskim Lacznikiem! '),
-						write(WynikWL) ; Max =:= WynikRA -> 
-							write(' Jestes Racjonalnym Analitykiem! '),
-							write(WynikRA) ; Max =:= WynikDZ ->
-								write(' Jestes Dusza Zespolu! '),
-								write(WynikDZ) ; Max =:= WynikFP ->
-									write(' Jestes Finiszujacym Perfekcjonista! '),
-									write(WynikFP)).
+		Final is WynikKL, Message is 1 ; Max =:= WynikPR -> 
+			Final is WynikPR, Message is 2 ; Max =:= WynikAK -> 
+				Final is WynikAK, Message is 3 ; Max =:= WynikKP -> 
+					Final is WynikKP, Message is 4 ; Max =:= WynikWL ->
+						Final is WynikWL, Message is 5 ; Max =:= WynikRA -> 
+							Final is WynikRA, Message is 6 ; Max =:= WynikDZ ->
+								Final is WynikDZ, Message is 7 ; Max =:= WynikFP ->
+									Final is WynikFP, Message is 8).
 
 check_answer_kl(X, K) :-
 	points(X, A, J),
@@ -171,7 +251,7 @@ check_answer_fp(X, K) :-
 	A = Elem -> K is J ; K is 0.
 
 	
-belbin_test :- 
+belbin_test(_Request) :- 
 	write('Pierwsze pytanie: '),
 	nl,
 	write('Mysle, ze na moj wklad w prace zespolu sklada sie: '),
